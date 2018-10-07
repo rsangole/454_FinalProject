@@ -4,7 +4,7 @@ library(R.utils)
 library(janitor)
 library(caret)
 
-# gunzip("data/covtype.data.gz")
+gunzip("data/covtype.data.gz")
 
 raw_data <- read_csv("data/covtype.data", col_names = F)
 
