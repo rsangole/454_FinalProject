@@ -1,0 +1,50 @@
+---
+title: "Team Checkpoint - Team A"
+author: "Stephan, David, Mike & Rahul"
+date: "10/27/2018"
+output: 
+  html_document: 
+    highlight: zenburn
+    theme: flatly
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(car)
+library(tidyverse)
+library(lattice)
+library(latticeExtra)
+library(ggthemr)
+library(janitor)
+library(gridExtra)
+library(tidyr)
+ggthemr("fresh")
+```
+
+# Team Members
+
+This report is for Team A, which includes:
+
+* Stephan Granitz
+* Michael Kapelinski
+* David Lyngholm
+* Rahul Sangole
+
+\newpage
+
+# Introduction
+
+# The Modeling Problem: See the Team Project Guide for the description.
+
+# The Data: Data Inventory and Data Quality Check
+
+# EDA: Initial exploratory data analysis.
+
+# Predictive Modeling: Methods and Results:  Initial modeling results.
+
+# Next Steps: List of statistical techniques that you will pursue.
+
+\newpage
+
+# Appendix
+
