@@ -165,6 +165,7 @@ transform_soil_to_factor <- function(df) {
 
 # Distances
 add_distances_features <- function(df){
+    message("... Adding distance features")
     df %>%
         mutate(st_line_dist_to_hydrology = sqrt(horizontal_distance_to_hydrology^2+vertical_distance_to_hydrology^2),
                neg_vert_dist = vertical_distance_to_hydrology<0,
@@ -241,3 +242,14 @@ make_response_var_the_first_var <- function(df){
         select(cover_type,
                names(df))
 }
+
+# Generic function to convert factor vars into dummy vars
+convert_factors_dummies <- function(df){
+    message("... Converting factors to dummy variables")
+    fct_df <- df %>% dplyr::select(-cover_type) %>% dplyr::select_if(is.factor)
+    keep <- !(names(df) %in% names(fct_df))
+    model.matrix(~., fct_df)[,-1] %>%
+        as_tibble() %>%
+        janitor::clean_names() %>%
+        bind_cols(df[keep])
+    }
