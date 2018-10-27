@@ -1,0 +1,129 @@
+---
+title: "EDA - R Sangole"
+output:
+  html_notebook:
+    highlight: zenburn
+    theme: flatly
+    toc: yes
+  pdf_document:
+    fig_width: 9
+    highlight: zenburn
+    toc: yes
+---
+```{r libraries, message=FALSE, warning=FALSE}
+library(tidyverse)
+library(glue)
+library(janitor)
+library(caret)
+library(lattice)
+library(skimr)
+library(latticeExtra)
+library(lattice)
+library(plotly)
+library(ggthemr)
+library(GGally)
+ggthemr('light')
+```
+```{r load_data}
+load('../cache/raw_train.rdata')
+```
+
+# Hypotheses
+
+## H1 - Some cover types have large h distances
+
+- Some covertypes have very large absolute values of distances. cottonwood has < 550. 
+- This could be an additional indicator variable. "h_dist_gt_500"
+- Some binning and indicator variables might show promise
+- Therea are also some linear structures in the data that perhaps can be exploited
+
+```{r}
+raw_train %>%    
+    dplyr::select(cover_type, contains("hydrology")) %>%
+    ggplot(aes(horizontal_distance_to_hydrology, vertical_distance_to_hydrology)) +
+    geom_point(aes(color = cover_type), alpha = 0.1, stroke = 0) +
+    geom_smooth() +
+    facet_wrap(~cover_type) +
+    theme(legend.position="none")
+```
+
+```{r}
+raw_train %>%    
+    ggplot(aes(cover_type, horizontal_distance_to_hydrology))+
+    geom_jitter(alpha=0.05)+
+    geom_boxplot(fill=NA)+
+    geom_hline(yintercept = 0, color='gray')
+```
+
+. These plots show h_dist is either exactly 0 or there's a positive number
+
+```{r}
+densityplot(~horizontal_distance_to_hydrology|cover_type,raw_train, plot.points=F,bw = 10)
+```
+
+```{r}
+raw_train %>%
+    group_by(cover_type) %>% 
+    summarise(max = max(horizontal_distance_to_hydrology), min = min(horizontal_distance_to_hydrology))
+```
+
+
+## H2 - Some cover types have only positive v distances
+
+- There seems to be some truth in this.
+- cottonwood is absolutely almost around 0
+- spruce and lodgepole have strong -ve components but not so much the other trees. 
+- perhaps an indicator variable would improve the model "v_dist_lt_0"
+- also, some v_dsts are capped at ~270 (like ponderosa or aspen or douglasfir). Only lodgepole goes > 450. this is a definite predictor. we should have an indicator var like "v_dist_gt_450". 
+- come to think of it... perhaps a binning strategy would benefit here, driving better predictive performance than nominal variable
+
+```{r}
+raw_train %>%    
+    dplyr::select(cover_type, contains("hydrology")) %>%
+    ggplot(aes(cover_type, vertical_distance_to_hydrology))+
+    geom_jitter(alpha=0.05)+
+    geom_hline(yintercept = 0, color='gray')
+```
+```{r}
+raw_train %>%
+    group_by(cover_type) %>% 
+    summarise(max = max(vertical_distance_to_hydrology), min = min(vertical_distance_to_hydrology))
+```
+
+## H3 - Direct distances add value
+
+- Not sure that it does... although it might clean up the distributions a bit. we'll have to experiment
+
+```{r}
+raw_train <- raw_train %>% 
+    mutate(dist = sqrt(horizontal_distance_to_hydrology^2+vertical_distance_to_hydrology^2))
+raw_train %>% 
+    ggplot(aes(cover_type, dist)) +
+    geom_jitter(alpha = 0.1, stroke = 0) +
+    geom_boxplot(fill=NA)
+```
+
+
+```{r message=FALSE, warning=FALSE, fig.height=6, fig.width=10}
+raw_train %>%    
+    dplyr::select(cover_type, contains("hill")) %>%
+    ggpairs(aes(color=cover_type), alpha=0.2)
+```
+
+# EDA Takeaways & Ideas
+
+## Observations
+
+1. {lodgepole:aspen}, {ponderosa:cottonwood} have similar distributions across soils
+1. no strong correlations among the soils
+1. clear distinctions among wilderness - {{spruce:lodgepole}:{aspen:krummholz}}, {ponderosa:douglasfir}, {cottonwood}
+1. Some strong interactions between wilderness & soil type and cover_type
+1. krummholz is strongly soils > 35
+1. Shade measures (esp9am) seem quite predictive
+
+## Ideas
+
+1. Interactions can be modeled explicitely for linear models or to boost accuracy of the heuristic models, especially some wilderness*soiltypes
+1. change hori and vertical distance to hydrology to a straight line distance
+1. lots of opportunities for indicator variables after binning continuous variables
+1. PCA to dimension reduce soil / hillside vars?

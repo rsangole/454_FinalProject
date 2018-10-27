@@ -11,3 +11,5 @@ raw_train
 str(raw_train)
 
 skimr::skim(raw_train)
+
+
