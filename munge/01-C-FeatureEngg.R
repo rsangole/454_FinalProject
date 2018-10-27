@@ -51,15 +51,15 @@ make_and_print_bins <- function(x, breaks = 10) {
   )
 }
 make_and_print_bins(raw_train$elevation)
-make_and_print_bins(raw_train$aspect)
-make_and_print_bins(raw_train$slope)
-make_and_print_bins(raw_train$horizontal_distance_to_hydrology)
-make_and_print_bins(raw_train$vertical_distance_to_hydrology)
-make_and_print_bins(raw_train$horizontal_distance_to_roadways)
-make_and_print_bins(raw_train$hillshade_9am)
-make_and_print_bins(raw_train$hillshade_noon)
-make_and_print_bins(raw_train$hillshade_3pm)
-make_and_print_bins(raw_train$horizontal_distance_to_fire_points)
+# make_and_print_bins(raw_train$aspect)
+# make_and_print_bins(raw_train$slope)
+# make_and_print_bins(raw_train$horizontal_distance_to_hydrology)
+# make_and_print_bins(raw_train$vertical_distance_to_hydrology)
+# make_and_print_bins(raw_train$horizontal_distance_to_roadways)
+# make_and_print_bins(raw_train$hillshade_9am)
+# make_and_print_bins(raw_train$hillshade_noon)
+# make_and_print_bins(raw_train$hillshade_3pm)
+# make_and_print_bins(raw_train$horizontal_distance_to_fire_points)
 
 transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10) {
   message("... Transforming conti vars to binned factor vars, using breaks = ", breaks)
@@ -230,3 +230,14 @@ add_pca_transform_hillshade <- function(df) {
 # Fully standardized training set
 center_scale_pp <- preProcess(raw_train,
                               method = c("center","scale"))
+
+
+
+# Make response var the first variable (useful when modeling)
+
+make_response_var_the_first_var <- function(df){
+    message("... Making resp var the first var")
+    df %>%
+        select(cover_type,
+               names(df))
+}
