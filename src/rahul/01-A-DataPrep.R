@@ -23,13 +23,15 @@ df_xg <- raw_train %>%
     transform_continuous_to_bins() %>%
     # transform_wilderness_to_factor() %>%
     # transform_soil_to_factor() %>%
-    make_response_var_the_first_var()
+    convert_factors_dummies() %>%
+    make_response_var_the_first_var() %>%
+    purrr::map_df(~as.numeric(.x))
 
 glimpse(df_xg)
 
-model_mat <- model.matrix(cover_type~., df_xg)[,-1]
-model_mat <- xgboost::xgb.DMatrix(model_mat)
+model_mat <- xgboost::xgb.DMatrix(as.matrix(df_xg), label=df_xg$cover_type)
 
 xgboost(data = model_mat,
-        label = 'cover_type',
-        verbose = 2)
+        # label = df_xg$cover_type,
+        verbose = 2,
+        nrounds = 500)
