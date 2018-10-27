@@ -35,7 +35,7 @@ This report is for Team A, which includes:
 # Introduction
 
 # The Modeling Problem
-There is a need to predict the forest cover for 30 x 30 meter cells from cartographic variables obtained from US Forest Service (USFS) Region 2 Resource Information System (RIS) data.  The objective is to predict cover type as a multiclass classification problem based on the associated attributes (features)
+There is a need to predict the forest cover for 30 x 30 meter cells from cartographic variables obtained from US Forest Service (USFS) Region 2 Resource Information System (RIS) data.  The objective is to predict cover type as a multiclass classification problem based on the associated attributes (features). 
 
 # The Data: Data Inventory and Data Quality Check
 
