@@ -25,6 +25,8 @@ library(R.utils)
 library(skimr)
 library(tidyr)
 library(tidyverse)
+library(doParallel)
+library(randomForest)
 
 
 ggthemr("fresh")
