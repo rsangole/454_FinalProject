@@ -274,7 +274,26 @@ raw_train %>%
 ```
 
 # Predictive Modeling: Methods and Results:  Initial modeling results.
+A preliminary Random forest model was constructed to gain a deeper understanding of the relationships between variables and predictors. 
+```{r}
+# Create a data.table from data.frame
+cover_data <- as.data.table(raw_train)
+rm(raw_train)
+#run model in parallel
+cl <- makeCluster(detectCores())
+registerDoParallel(cl)
+# Run a base forest model for EDA 
+base_forest <- randomForest(cover_type ~ ., data=cover_data, mtry=sqrt(ncol(cover_data)), 
+                    ntree = 300, importance =T, do.trace=50)
 
+stopCluster(cl)
+base_forest
+```
+The variable importnace plot builds upon what is seen in the EDA, and indicates what features should be pursued further. The plot on the left indicates which variables' inclusion reduces the classification error rate. The greater the MDA (Mean Decrease in Accuracy) the more important this variable is. The plot on the right indicates which variables contribute to the highest homogeneity in the nodes. The greater the mean decrease in Gini the higher the variables contribution to node purity. 
+
+```{r}
+varImpPlot(base_forest)
+```
 # Next Steps: List of statistical techniques that you will pursue.
 
 \newpage
