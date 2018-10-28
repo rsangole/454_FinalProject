@@ -45,6 +45,24 @@ This report is for Team A, which includes:
 \newpage
 
 # Introduction
+Introduction:
+The United States forest Service (UFS) considers itself a multi-faceted agency.  Cumulatively, the agency manages and protects 154 national forests and 20 grasslands in 43 states and Puerto Rico including approximately 500 million acres of private, state and tribal forests, on which the UFS promotes sustainable management.   The UFS mission is to sustain the health, diversity, and productivity of the nation’s forests and grasslands to meet the needs of present and future generations.  Some highlights of the UFS responsibility are shown below:
+
+o	13 billion dollars contributed to the U.S. economy by visitor spending each year
+o	193 million acres managed by the Forest Service
+o	27 million annual visits to ski areas on national forests
+o	7.2 million acres of wetlands 
+o	36.6 million acres of wilderness
+o	400,000 acres of lakes
+o	57,000 miles of streams
+o	10,000 professional wildland firefighters
+o	154 national forests
+o	20 percent of America’s clean water supply provided by the national forests and grasslands
+Source: https://www.fs.fed.us/about-agency/newsroom/by-the-numbers
+
+Like any managerial process, the UFS’s success is measured in terms of how well it maximizes its use of resources (time, people, and money) to deliver value to their customers, in this case the US taxpayer/government.  To maximize their impact, the UFS has had success creating partnerships with public and private agencies that help the UFS plant trees, improve trails, educate the public, and promote sustainable forest management and biodiversity conservation domestically and internationally.  
+
+Given the large area, various climates and terrains, diverse plants and forest species, and wildlife that make surveying the locations on any kind of frequent basis, the Forest Gladiator team has been tasked with developing a predictive model(s) using existing data to improve the UFS’s management capabilities involving forest cover areas.
 
 # The Modeling Problem
 There is a need to predict the forest cover for 30 x 30 meter cells using cartographic variables obtained from US Forest Service (USFS) Region 2 Resource Information System (RIS) data.  The objective is to predict cover type as a multiclass classification problem based on the associated attributes (features). 
