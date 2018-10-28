@@ -8,16 +8,25 @@ output:
     theme: flatly
 ---
 
-```{r setup, include=FALSE}
+```{r setup, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
 library(car)
-library(tidyverse)
+library(caret)
+library(glue)
+library(ggthemr)
+library(grid)
+library(gridExtra)
+library(janitor)
 library(lattice)
 library(latticeExtra)
-library(ggthemr)
-library(janitor)
-library(gridExtra)
+library(pander)
+library(reshape2)
+library(R.utils)
+library(skimr)
 library(tidyr)
+library(tidyverse)
+
+
 ggthemr("fresh")
 ```
 
@@ -39,7 +48,230 @@ There is a need to predict the forest cover for 30 x 30 meter cells using cartog
 
 # The Data: Data Inventory and Data Quality Check
 
+```{r load data, include=FALSE}
+raw_data <- read_csv("C:/Users/sgran/Downloads/covtype.data", 
+                     col_names = FALSE)
+```
+
+In our raw data it is clear that we don't have an even distribuion of the target variable (cover types). The data set is over 85% Spruce Fir and Lodgepole Pine. Another nearly 10% are Ponerosa Pine and Krummholz. This needs to be taken into account as we split the data for training and testing. It also gives us a good benchmark for our models as we check the outputs on the test data.
+
+```{r clean file, include=FALSE}
+col_names <- c(
+  "elevation",
+  "aspect",
+  "slope",
+  "horizontal_distance_to_hydrology",
+  "vertical_distance_to_hydrology",
+  "horizontal_distance_to_roadways",
+  "hillshade_9am",
+  "hillshade_noon",
+  "hillshade_3pm",
+  "horizontal_distance_to_fire_points",
+  glue::glue("wilderness_area{x}", x = 1:4),
+  glue::glue("soil_type{x}", x = 1:40),
+  "cover_type"
+)
+
+names(raw_data) <- col_names
+
+raw_data$cover_type <- factor(
+  x = raw_data$cover_type,
+  levels = 1:7,
+  labels = c(
+    "spruce_fir",
+    "lodgepole_pine",
+    "ponderosa_pine",
+    "cottonwood_Willow",
+    "aspen",
+    "douglasfir",
+    "krummholz"
+  )
+)
+
+raw_data %>% 
+  tabyl(cover_type) %>% 
+  mutate(percent = round(100 * percent, 2))
+```
+
+From a quick skim of the data we see it is already pretty clean. There are no missing data and nothing jumps out as obviously out of the ordinary. There are clear groups of variables that we will explore for patterns such as soil type, distance measures, shade at different times of day, and wilderness area.
+
+```{r split data, warning=FALSE}
+set.seed(10)
+
+train_index <- caret::createDataPartition(
+  y = raw_data$cover_type,
+  p = 0.7,
+  times = 1,
+  list = FALSE
+)
+
+raw_train <- raw_data[train_index,]
+raw_test  <- raw_data[-train_index,]
+
+skim(raw_train) %>% pander() 
+```
+
+If we set aside the larger groups of variables, we get three other variables to look at: aspect, elevation, and slope. A quick look shows that elevation may help separate the cover types. There may also be interesting ways to combine these variables.
+
+```{r initial look}
+raw_train %>% 
+  dplyr::select(cover_type, aspect, elevation, slope) %>% 
+  gather(-cover_type, key = key, value = val) %>% 
+  ggplot(aes(cover_type, val, fill = cover_type)) +
+  geom_boxplot() +
+  coord_flip() +
+  facet_grid(~key, scales = "free") +
+  theme(legend.position="none")
+```
+
+A density plot of elevation shows there is overlap but the groups are reasonably separated. This will likely be an important variable for our models.
+
+```{r elevation}
+raw_train %>% 
+  ggplot(aes(x=elevation)) + 
+  geom_density(aes(group=cover_type, color=cover_type, fill=cover_type), alpha=0.3)
+```
+
 # EDA: Initial exploratory data analysis.
+
+The first group of variables are the 40 soil types. By plotting the proportion of each cover type contains each soil type we get some obvious clusters. Likely in modeling we will want to group the soil types. Initial insights show that Krumholz is mostly in soil types 30 through 40. Ponderosa Pine and Cottonwood Willow are 0 through 20.
+
+Soil types present in a cell can help eliminate the options for cover type in our model.
+
+```{r soil}
+train_soil <- raw_train %>%
+  dplyr::select(cover_type, contains("soil")) %>%
+  gather(-cover_type, key = soil, value = val) %>%
+  mutate(soil = parse_number(soil), n=1) 
+
+train_soil %>% 
+  group_by(cover_type, soil) %>%
+  summarise(total = sum(val),
+            prop  = total / sum(n)) %>% 
+  ggplot(aes(soil, prop, fill = cover_type)) + 
+  geom_col() +
+  facet_grid(~cover_type) +
+  theme(axis.text.x = element_text(size = 6, angle=45),
+        legend.position="none") +
+  coord_flip()
+```
+
+Looking further into the soil types we can see that cover types usually have mostly soil types over or under 20, not both, except for aspen which is spread across the spectrum. 
+
+```{r soil2}
+train_soil %>% 
+  filter(val > 0) %>% 
+  ggplot(aes(cover_type, val, fill = soil)) +
+  geom_col(position="fill") +
+  coord_flip()
+```
+
+The next grouping of variables is wilderness area. Again we see some clear delineations aong the cover types. Cottonwood Willow is only in area four. Ponderosa Pine and Douglasfir have three and four, whereas the reaining cover types are primarily three and one.
+
+```{r wild}
+train_wild <- raw_train %>%
+  dplyr::select(cover_type, contains("wilderness")) %>%
+  gather(-cover_type, key = wild, value = val) %>%
+  mutate(wild = parse_number(wild), n=1) 
+
+train_wild %>% 
+  group_by(cover_type, wild) %>%
+  summarise(total = sum(val),
+            prop  = total / sum(n)) %>% 
+  ggplot(aes(wild, prop, fill = cover_type)) + 
+  geom_col() +
+  facet_grid(~cover_type) +
+  theme(axis.text.x = element_text(size = 6, angle=45),
+        legend.position="none") +
+  coord_flip()
+```
+
+Another view of the proportions confirms this. 
+
+```{r wild2}
+train_wild %>% 
+  filter(val > 0) %>% 
+  ggplot(aes(cover_type, val, fill = wild)) +
+  geom_col(position="fill") +
+  coord_flip()
+```
+
+Interestingly wilderness areas three and one are negatively correlated. This may be useful for our models.
+
+```{r wild corr}
+raw_train %>% 
+  dplyr::select(contains("wilderness")) %>% 
+  cor() %>% 
+  melt() %>% 
+  mutate(v1 = parse_number(Var1),
+         v2 = parse_number(Var2)) %>% 
+  ggplot(aes(v1, v2, fill = value)) +
+  geom_tile()
+```
+
+Combining soil types and wilderness areas into one plot gives us some obvious clusters in the training data. Further investigation of how to best group these variables will be useful for the modeling phase.
+
+```{r soil_wild}
+raw_train %>% 
+  dplyr::select(cover_type, contains("soil"), contains("wilderness")) %>% 
+  mutate(n=1) %>% 
+  gather(contains("soil"), key = soil, value = soil_val) %>%
+  gather(contains("wilderness"), key = wild, value = wild_val) %>%
+  filter(soil_val > 0, wild_val > 0) %>% 
+  group_by(cover_type, soil, wild) %>% 
+  summarise(n = sum(n)) %>% 
+  ungroup() %>% 
+  group_by(cover_type) %>% 
+  mutate(prop = n / sum(n)) %>%
+  mutate(soil = parse_number(soil), 
+         wild = parse_number(wild)) %>% 
+  ungroup() %>% 
+  ggplot(aes(wild, soil, color=cover_type, size = prop)) + 
+  geom_point() +
+  theme(legend.position="none") +
+  facet_grid(~cover_type) 
+```
+
+Shade measurements at various times of day show that some cover types have more variation than others. The pines and Spruce Fir are more likely to have lower shade values (<100) than the other cover types.  
+
+```{r shade}
+raw_train %>% 
+  dplyr::select(cover_type, contains("hillshade")) %>% 
+  gather(-cover_type, key = shade, value = val) %>% 
+  mutate(shade = factor(shade, levels = c("hillshade_9am", "hillshade_noon", "hillshade_3pm"))) %>% 
+  ggplot(aes(cover_type, val)) +
+  geom_jitter(aes(color = shade), alpha = 0.05, stroke = 0) +
+  geom_boxplot(aes(fill = shade)) +
+  coord_flip() +
+  facet_grid(~shade) +
+  theme(legend.position="none")
+```
+
+Similarly, the distance variables have cutoffs that can help identify a cover type. Lodgepole Pine and Spruce Fir have much wider ranges f distance measurements than the other cover types.
+
+```{r dist}
+raw_train %>% 
+  dplyr::select(cover_type, contains("distance")) %>% 
+  gather(-cover_type, key = dist, value = val) %>% 
+  ggplot(aes(cover_type, val)) +
+  geom_jitter(aes(color = dist), alpha = 0.05, stroke = 0) +
+  geom_boxplot(aes(fill = dist)) +
+  coord_flip() +
+  facet_grid(~dist, scales = "free") +
+  theme(legend.position="none")
+```
+
+Looking at the horizontal and vertical distance to hydrology, most cover types have similar, positive correlations. Combining these variables may further help in distinguishing our target variable.
+
+```{r}
+raw_train %>% 
+  dplyr::select(cover_type, contains("hydrology")) %>% 
+  ggplot(aes(horizontal_distance_to_hydrology, vertical_distance_to_hydrology)) +
+  geom_point(aes(color = cover_type), alpha = 0.01, stroke = 0) +
+  geom_smooth() +
+  facet_grid(~cover_type) +
+  theme(legend.position="none")
+```
 
 # Predictive Modeling: Methods and Results:  Initial modeling results.
 
@@ -48,4 +280,3 @@ There is a need to predict the forest cover for 30 x 30 meter cells using cartog
 \newpage
 
 # Appendix
-
