@@ -66,9 +66,9 @@ The United States forest Service (UFS) considers itself a multi-faceted agency. 
 
 [^1]: Source: https://www.fs.fed.us/about-agency/newsroom/by-the-numbers
 
-Like any managerial process, the UFS’s success is measured in terms of how well it maximizes its use of resources (time, people, and money) to deliver value to their customers, in this case the US taxpayer/government. To maximize their impact, the UFS has had success creating partnerships with public and private agencies that help the UFS plant trees, improve trails, educate the public, and promote sustainable forest management and biodiversity conservation domestically and internationally.  
+Like any managerial process, the UFS’s success is measured in terms of how well it maximizes its use of resources (time, people, and money) to deliver value to their customers, in this case the US taxpayer/government. To maximize their impact, the UFS has had success creating partnerships with public and private agencies that help the UFS plant trees, improve trails, educate the public, and promote sustainable forest management and biodiversity conservation domestically and internationally.
 
-Given the large area, various climates and terrains, diverse plants and forest species, and wildlife that make surveying the locations on any kind of frequent basis, the Forest Gladiator team has been tasked with developing a predictive model(s) using existing data to improve the UFS’s management capabilities involving forest cover areas.
+Given the large area, various climates and terrains, diverse plants and forest species, and wildlife that make surveying the locations on any kind of frequent basis, the Forest Gladiator team has been tasked with developing a predictive model(s) using existing data to improve the USFS’s management capabilities involving forest cover areas.
 
 # The Modeling Problem
 
