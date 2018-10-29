@@ -2,13 +2,13 @@ library(car)
 library(tidyverse)
 library(lattice)
 library(latticeExtra)
-library(caret)
 library(ggthemr)
 library(janitor)
 library(gridExtra)
 library(tidyr)
 library(xgboost)
 library(xgboostExplainer)
+library(caret)
 
 ggthemr("fresh")
 options(max.print = 1000)
@@ -35,3 +35,14 @@ xgboost(data = model_mat,
         # label = df_xg$cover_type,
         verbose = 2,
         nrounds = 500)
+
+caret::train(as.factor(cover_type)~.,
+      df_xg,
+      method='xgboost')
+
+
+library(randomForest)
+df_
+rfFit <- randomForest(formula = as.factor(cover_type)~.,
+             data = df_xg,
+             importance = T)

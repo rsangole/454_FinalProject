@@ -1,15 +1,20 @@
 ---
-title: "Team Checkpoint - Team A"
+title: "Team Checkpoint - Team 1"
 author: "Stephan, David, Mike & Rahul"
 date: "10/27/2018"
 output: 
-  html_document: 
-    highlight: zenburn
-    theme: flatly
+  pdf_document: 
+    fig_height: 4
+    fig_width: 10
+    highlight: espresso
+    dev: png
 ---
 
 ```{r setup, message=FALSE, warning=FALSE, include=FALSE, paged.print=FALSE}
-knitr::opts_chunk$set(echo = TRUE)
+knitr::opts_chunk$set(
+	message = FALSE,
+	warning = FALSE
+)
 library(car)
 library(caret)
 library(glue)
@@ -35,7 +40,7 @@ ggthemr("fresh")
 
 # Team Members
 
-This report is for Team A, which includes:
+This report is for Team 1, which includes:
 
 * Stephan Granitz
 * Michael Kapelinski
@@ -45,36 +50,38 @@ This report is for Team A, which includes:
 \newpage
 
 # Introduction
-Introduction:
-The United States forest Service (UFS) considers itself a multi-faceted agency.  Cumulatively, the agency manages and protects 154 national forests and 20 grasslands in 43 states and Puerto Rico including approximately 500 million acres of private, state and tribal forests, on which the UFS promotes sustainable management.   The UFS mission is to sustain the health, diversity, and productivity of the nation’s forests and grasslands to meet the needs of present and future generations.  Some highlights of the UFS responsibility are shown below:
 
-o	13 billion dollars contributed to the U.S. economy by visitor spending each year
-o	193 million acres managed by the Forest Service
-o	27 million annual visits to ski areas on national forests
-o	7.2 million acres of wetlands 
-o	36.6 million acres of wilderness
-o	400,000 acres of lakes
-o	57,000 miles of streams
-o	10,000 professional wildland firefighters
-o	154 national forests
-o	20 percent of America’s clean water supply provided by the national forests and grasslands
-Source: https://www.fs.fed.us/about-agency/newsroom/by-the-numbers
+The United States forest Service (UFS) considers itself a multi-faceted agency. Cumulatively, the agency manages and protects 154 national forests and 20 grasslands in 43 states and Puerto Rico including approximately 500 million acres of private, state and tribal forests, on which the UFS promotes sustainable management. The UFS mission is to sustain the health, diversity, and productivity of the nation’s forests and grasslands to meet the needs of present and future generations. Some highlights of the UFS responsibility are shown below [^1]:
 
-Like any managerial process, the UFS’s success is measured in terms of how well it maximizes its use of resources (time, people, and money) to deliver value to their customers, in this case the US taxpayer/government.  To maximize their impact, the UFS has had success creating partnerships with public and private agencies that help the UFS plant trees, improve trails, educate the public, and promote sustainable forest management and biodiversity conservation domestically and internationally.  
+* 13 billion dollars contributed to the U.S. economy by visitor spending each year
+* 193 million acres managed by the Forest Service
+* 27 million annual visits to ski areas on national forests
+* 7.2 million acres of wetlands 
+* 36.6 million acres of wilderness
+* 400,000 acres of lakes
+* 57,000 miles of streams
+* 10,000 professional wildland firefighters
+* 154 national forests
+* 20 percent of America’s clean water supply provided by the national forests and grasslands
+
+[^1]: Source: https://www.fs.fed.us/about-agency/newsroom/by-the-numbers
+
+Like any managerial process, the UFS’s success is measured in terms of how well it maximizes its use of resources (time, people, and money) to deliver value to their customers, in this case the US taxpayer/government. To maximize their impact, the UFS has had success creating partnerships with public and private agencies that help the UFS plant trees, improve trails, educate the public, and promote sustainable forest management and biodiversity conservation domestically and internationally.  
 
 Given the large area, various climates and terrains, diverse plants and forest species, and wildlife that make surveying the locations on any kind of frequent basis, the Forest Gladiator team has been tasked with developing a predictive model(s) using existing data to improve the UFS’s management capabilities involving forest cover areas.
 
 # The Modeling Problem
+
 There is a need to predict the forest cover for 30 x 30 meter cells using cartographic variables obtained from US Forest Service (USFS) Region 2 Resource Information System (RIS) data.  The objective is to predict cover type as a multiclass classification problem based on the associated attributes (features). 
 
 # The Data: Data Inventory and Data Quality Check
 
 ```{r load data, include=FALSE}
-raw_data <- read_csv("C:/Users/sgran/Downloads/covtype.data", 
+raw_data <- read_csv("../data/covtype.data", 
                      col_names = FALSE)
 ```
 
-In our raw data it is clear that we don't have an even distribuion of the target variable (cover types). The data set is over 85% Spruce Fir and Lodgepole Pine. Another nearly 10% are Ponerosa Pine and Krummholz. This needs to be taken into account as we split the data for training and testing. It also gives us a good benchmark for our models as we check the outputs on the test data.
+In our raw data it is clear that we don't have an even distribuion of the target variable (cover types). The data set is over 85% Spruce Fir and Lodgepole Pine. Another nearly 10% are Ponerosa Pine and Krummholz. While developing the training and testing data splits, this was taken into account. The splits were stratified on the cover types so that both data sets have equal distributions of cover type.
 
 ```{r clean file, include=FALSE}
 col_names <- c(
@@ -108,15 +115,16 @@ raw_data$cover_type <- factor(
     "krummholz"
   )
 )
-
+```
+```{r echo=FALSE}
 raw_data %>% 
   tabyl(cover_type) %>% 
-  mutate(percent = round(100 * percent, 2))
+    adorn_pct_formatting() %>% 
+    knitr::kable()
 ```
 
-From a quick skim of the data we see it is already pretty clean. There are no missing data and nothing jumps out as obviously out of the ordinary. There are clear groups of variables that we will explore for patterns such as soil type, distance measures, shade at different times of day, and wilderness area.
 
-```{r split data, warning=FALSE}
+```{r split data, echo=FALSE, message=FALSE, warning=FALSE}
 set.seed(10)
 
 train_index <- caret::createDataPartition(
@@ -128,13 +136,11 @@ train_index <- caret::createDataPartition(
 
 raw_train <- raw_data[train_index,]
 raw_test  <- raw_data[-train_index,]
-
-skim(raw_train) %>% pander() 
 ```
 
-If we set aside the larger groups of variables, we get three other variables to look at: aspect, elevation, and slope. A quick look shows that elevation may help separate the cover types. There may also be interesting ways to combine these variables.
+From a quick skim of the data we see it is already pretty clean. There are no missing data and nothing jumps out as obviously out of the ordinary. There are clear groups of variables that we will explore for patterns such as soil type, distance measures, shade at different times of day, and wilderness area. If we set aside the larger groups of variables, we get three other variables to look at: aspect, elevation, and slope. A quick look shows that elevation may help separate the cover types. There may also be interesting ways to combine these variables.
 
-```{r initial look}
+```{r initial look, echo=FALSE, message=FALSE, warning=FALSE}
 raw_train %>% 
   dplyr::select(cover_type, aspect, elevation, slope) %>% 
   gather(-cover_type, key = key, value = val) %>% 
@@ -147,7 +153,7 @@ raw_train %>%
 
 A density plot of elevation shows there is overlap but the groups are reasonably separated. This will likely be an important variable for our models.
 
-```{r elevation}
+```{r elevation, echo=FALSE, message=FALSE, warning=FALSE}
 raw_train %>% 
   ggplot(aes(x=elevation)) + 
   geom_density(aes(group=cover_type, color=cover_type, fill=cover_type), alpha=0.3)
@@ -159,7 +165,7 @@ The first group of variables are the 40 soil types. By plotting the proportion o
 
 Soil types present in a cell can help eliminate the options for cover type in our model.
 
-```{r soil}
+```{r soil, echo=FALSE, message=FALSE, warning=FALSE}
 train_soil <- raw_train %>%
   dplyr::select(cover_type, contains("soil")) %>%
   gather(-cover_type, key = soil, value = val) %>%
@@ -174,22 +180,24 @@ train_soil %>%
   facet_grid(~cover_type) +
   theme(axis.text.x = element_text(size = 6, angle=45),
         legend.position="none") +
+    labs(y="Soil-Type Number", x = "Proportion (%)") +
   coord_flip()
 ```
 
 Looking further into the soil types we can see that cover types usually have mostly soil types over or under 20, not both, except for aspen which is spread across the spectrum. 
 
-```{r soil2}
+```{r soil2, echo=FALSE, message=FALSE, warning=FALSE}
 train_soil %>% 
-  filter(val > 0) %>% 
+  dplyr::filter(val > 0) %>% 
   ggplot(aes(cover_type, val, fill = soil)) +
   geom_col(position="fill") +
+  labs(y="Cover Type", x = "Proportion (%)")+
   coord_flip()
 ```
 
 The next grouping of variables is wilderness area. Again we see some clear delineations aong the cover types. Cottonwood Willow is only in area four. Ponderosa Pine and Douglasfir have three and four, whereas the reaining cover types are primarily three and one.
 
-```{r wild}
+```{r wild, echo=FALSE, message=FALSE, warning=FALSE}
 train_wild <- raw_train %>%
   dplyr::select(cover_type, contains("wilderness")) %>%
   gather(-cover_type, key = wild, value = val) %>%
@@ -204,22 +212,25 @@ train_wild %>%
   facet_grid(~cover_type) +
   theme(axis.text.x = element_text(size = 6, angle=45),
         legend.position="none") +
+        labs(y="Wilderness Type", x = "Proportion (%)")+
   coord_flip()
 ```
 
 Another view of the proportions confirms this. 
 
-```{r wild2}
+```{r wild2, echo=FALSE, message=FALSE, warning=FALSE}
 train_wild %>% 
-  filter(val > 0) %>% 
+  dplyr::filter(val > 0) %>% 
   ggplot(aes(cover_type, val, fill = wild)) +
   geom_col(position="fill") +
+      labs(y="Cover Type", x = "Proportion (%)")+
+
   coord_flip()
 ```
 
 Interestingly wilderness areas three and one are negatively correlated. This may be useful for our models.
 
-```{r wild corr}
+```{r wild corr, echo=FALSE, message=FALSE, warning=FALSE, fig.asp=1, fig.width=4}
 raw_train %>% 
   dplyr::select(contains("wilderness")) %>% 
   cor() %>% 
@@ -232,13 +243,13 @@ raw_train %>%
 
 Combining soil types and wilderness areas into one plot gives us some obvious clusters in the training data. Further investigation of how to best group these variables will be useful for the modeling phase.
 
-```{r soil_wild}
+```{r soil_wild, echo=FALSE, message=FALSE, warning=FALSE}
 raw_train %>% 
   dplyr::select(cover_type, contains("soil"), contains("wilderness")) %>% 
   mutate(n=1) %>% 
   gather(contains("soil"), key = soil, value = soil_val) %>%
   gather(contains("wilderness"), key = wild, value = wild_val) %>%
-  filter(soil_val > 0, wild_val > 0) %>% 
+  dplyr::filter(soil_val > 0, wild_val > 0) %>% 
   group_by(cover_type, soil, wild) %>% 
   summarise(n = sum(n)) %>% 
   ungroup() %>% 
@@ -250,12 +261,13 @@ raw_train %>%
   ggplot(aes(wild, soil, color=cover_type, size = prop)) + 
   geom_point() +
   theme(legend.position="none") +
-  facet_grid(~cover_type) 
+  facet_grid(~cover_type)  + 
+  labs(y="Soil Type", x = "Wilderness Type")
 ```
 
 Shade measurements at various times of day show that some cover types have more variation than others. The pines and Spruce Fir are more likely to have lower shade values (<100) than the other cover types.  
 
-```{r shade}
+```{r shade, echo=FALSE, message=FALSE, warning=FALSE}
 raw_train %>% 
   dplyr::select(cover_type, contains("hillshade")) %>% 
   gather(-cover_type, key = shade, value = val) %>% 
@@ -268,9 +280,9 @@ raw_train %>%
   theme(legend.position="none")
 ```
 
-Similarly, the distance variables have cutoffs that can help identify a cover type. Lodgepole Pine and Spruce Fir have much wider ranges f distance measurements than the other cover types.
+Similarly, the distance variables have cutoffs that can help identify a cover type. Lodgepole Pine and Spruce Fir have much wider ranges of distance measurements than the other cover types. There are also quite clear upper limits for different types of cover types. This is leveraged to create new feature variables. For example, only Lodgepole has vertical distances to hydrology > 450.
 
-```{r dist}
+```{r dist, echo=FALSE, message=FALSE, warning=FALSE}
 raw_train %>% 
   dplyr::select(cover_type, contains("distance")) %>% 
   gather(-cover_type, key = dist, value = val) %>% 
@@ -282,9 +294,9 @@ raw_train %>%
   theme(legend.position="none")
 ```
 
-Looking at the horizontal and vertical distance to hydrology, most cover types have similar, positive correlations. Combining these variables may further help in distinguishing our target variable.
+Looking at the horizontal and vertical distance to hydrology, most cover types have similar, positive correlations. Combining these variables may further help in distinguishing our target variable. Some cover types have large values on both the positive and negative side, while others have tighter distributions. This is also exploited in feature creation.
 
-```{r}
+```{r echo=FALSE, warning=FALSE}
 raw_train %>% 
   dplyr::select(cover_type, contains("hydrology")) %>% 
   ggplot(aes(horizontal_distance_to_hydrology, vertical_distance_to_hydrology)) +
@@ -294,29 +306,56 @@ raw_train %>%
   theme(legend.position="none")
 ```
 
-# Predictive Modeling: Methods and Results:  Initial modeling results.
-A preliminary Random forest model was constructed to gain a deeper understanding of the relationships between variables and predictors. 
-```{r}
-# Create a data.table from data.frame
-cover_data <- as.data.table(raw_train)
-rm(raw_train)
-#run model in parallel
-cl <- makeCluster(detectCores())
-registerDoParallel(cl)
-# Run a base forest model for EDA 
-base_forest <- randomForest(cover_type ~ ., data=cover_data, mtry=sqrt(ncol(cover_data)), 
-                    ntree = 300, importance =T, do.trace=50)
+# Feature Engineering and Data Preparation
 
-stopCluster(cl)
-base_forest
+Based on the EDA performed, many new features are appended to the raw data:
+
+1. Transformation of continuous variables to binned variables is performed since some tree based learners do better with binned variables.
+1. Wilderness areas and Soil Types are also added as factor variables, with 4 and 40 levels respectively.
+1. Distance based features are added, viz:
+    + Straight line distance (eucledian) : Square root of sum of squares of `horizontal_distance_to_hydrology` and `vertical_distance_to_hydrology`
+    + Indicator variable for if `vertical_distance_to_hydrology` < 0
+    + Indicator variable for if `vertical_distance_to_hydrology` <= 350
+    + Indicator variable for if `vertical_distance_to_hydrology` is between 350 and 500
+    + Indicator variable for if `vertical_distance_to_hydrology` >= 500
+    + Indicator variable for if `horizontal_distance_to_hydrology` < 600
+    + Indicator variable for if `horizontal_distance_to_hydrology` < 1250
+    + Squared Distance Ratio : equal to the square of the ratio of  `horizontal_distance_to_hydrology` and `vertical_distance_to_hydrology`
+1. Principal Components:
+    + 6 PCA components for all variables except the Soil and Wilderness variables
+    + 2 PCA components for the Hillshade variables
+
+A few data transformations are also performed:
+
+1. BoxCox transformations of continous variables is investigated to make their distributions normally distributed. `Elevation` is found to have a lambda value of 2.
+1. Standardized (centered and scaled) continuous variables
+
+Certainly, not all of these features & transformations are applied at the same time. The creation of the features / transformations is modularized using functions. As a result, various configurations of the data can be easily investigated. 
+
+# Predictive Modeling: Initial modeling results
+
+A preliminary Random Forest model is constructed on the original raw dataset (without much pre-processing or feature engineering) to gain a some understanding of the key relationships between response and predictors, as well as establish a baseline performance one can expect. The performance of the model is decent, with a 16% error rate for the OOB samples. Class errors vary, from 8% for Ponderosa Pune to 80% for Aspen. However, these are both the minority classes which indicates some careful work might be needed to get adequate performance for the smaller classes. For the two majority classes, Spruce Fir and Lodgepole Pine, the performance is ~15%.
+
+```{r echo=FALSE, message=FALSE, warning=FALSE}
+base_forest <- readRDS('../cache/base_forest.RData')
+print(base_forest)
 ```
-The variable importnace plot builds upon what is seen in the EDA, and indicates what features should be pursued further. The plot on the left indicates which variables' inclusion reduces the classification error rate. The greater the MDA (Mean Decrease in Accuracy) the more important this variable is. The plot on the right indicates which variables contribute to the highest homogeneity in the nodes. The greater the mean decrease in Gini the higher the variables contribution to node purity. 
 
-```{r}
+The variable importnace plot builds upon what is seen in the EDA, and indicates what features should be pursued further. The plot on the left indicates which variables' inclusion reduces the classification error rate. The greater the MDA (Mean Decrease in Accuracy) the more important this variable is. The plot on the right indicates which variables contribute to the highest homogeneity in the nodes. The greater the mean decrease in Gini the higher the variables contribution to node purity.  In both, we can see that `elevation` is clearly the strongest predictor, followed by some of the `distance` variables. 
+
+```{r echo=FALSE, fig.height=8, message=FALSE, warning=FALSE, paged.print=TRUE}
 varImpPlot(base_forest)
 ```
-# Next Steps: List of statistical techniques that you will pursue.
 
-\newpage
+# Next Steps: List of Modeling Approaches
 
-# Appendix
+The team has decided to pursue four types of models going forward:
+
+1. Random Forest
+1. Boosting using `xgboost`
+1. Support Vector Machines
+1. Bayesian Modeling
+
+A few preliminary RF models are also going to be used to sort through the newly created features in an attempt at feature reduction and exploratory analysis into the data. Thereafter each individual model will be built on a number of types dataset preparations (for example: using dummy variables for factors vs using factors themselves, etc). The team will use techniques like repeated 10-fold Cross Validation to get estimates of test data performance, while using a metric like log-loss to evaluate the performance of any give model. Cross validation will also enable estimation of the standard error of the metric, as well as aid hyperparameter tuning.
+
+If the team has an opportunity, we would also like to explore ensemble models which combine the output of each of the four models in an attempt to improve the predictive performance.
