@@ -238,9 +238,9 @@ add_pca_transform_hillshade <- function(df) {
 
 
 # Fully standardized training set
-center_scale_pp <- preProcess(raw_train,
-  method = c("center", "scale")
-)
+# center_scale_pp <- preProcess(raw_train,
+#   method = c("center", "scale")
+# )
 
 
 # Make response var the first variable (useful when modeling)
