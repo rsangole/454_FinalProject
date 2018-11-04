@@ -1,34 +1,34 @@
-library(car)
-library(tidyverse)
-library(lattice)
-library(latticeExtra)
-library(caret)
-library(ggthemr)
-library(janitor)
-library(gridExtra)
-library(tidyr)
-ggthemr("fresh")
-options(max.print = 1000)
+# library(car)
+# library(tidyverse)
+# library(lattice)
+# library(latticeExtra)
+# library(caret)
+# library(ggthemr)
+# library(janitor)
+# library(gridExtra)
+# library(tidyr)
+# ggthemr("fresh")
+# options(max.print = 1000)
+#
+#
+# load("cache/raw_train.rdata")
+# glimpse(raw_train)
 
-
-load("cache/raw_train.rdata")
-glimpse(raw_train)
-
-# Near Zero Variance Analysis
-nzv_analysis <- caret::nearZeroVar(raw_train[-55], saveMetrics = T,
-                                   allowParallel = T)
-nzv_analysis
-cat("Potential variables to remove \n\n", names(raw_train)[nzv_analysis$nzv], "\n\n which have near zero variance")
-remove_nzv_variables <- function(df) {
-  message("... Removing NZV variables: ",
-          paste0(names(df)[nzv_analysis$nzv], sep = ", "))
-  df %>%
-    dplyr::select(names(df)[!nzv_analysis$nzv])
-}
-
-# BoxCox Transformations to Normalize Variables
-raw_train[c("elevation", "aspect", "slope", "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology", "horizontal_distance_to_roadways", "hillshade_9am", "hillshade_noon", "hillshade_3pm", "horizontal_distance_to_fire_points", "wilderness_area1", "wilderness_area2", "wilderness_area3")] %>%
-  purrr::map_dbl(~caret::BoxCoxTrans(.x)$lambda)
+# # Near Zero Variance Analysis
+# nzv_analysis <- caret::nearZeroVar(raw_train[-55], saveMetrics = T,
+#                                    allowParallel = T)
+# nzv_analysis
+# cat("Potential variables to remove \n\n", names(raw_train)[nzv_analysis$nzv], "\n\n which have near zero variance")
+# remove_nzv_variables <- function(df) {
+#   message("... Removing NZV variables: ",
+#           paste0(names(df)[nzv_analysis$nzv], sep = ", "))
+#   df %>%
+#     dplyr::select(names(df)[!nzv_analysis$nzv])
+# }
+#
+# # BoxCox Transformations to Normalize Variables
+# raw_train[c("elevation", "aspect", "slope", "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology", "horizontal_distance_to_roadways", "hillshade_9am", "hillshade_noon", "hillshade_3pm", "horizontal_distance_to_fire_points", "wilderness_area1", "wilderness_area2", "wilderness_area3")] %>%
+#   purrr::map_dbl(~caret::BoxCoxTrans(.x)$lambda)
 
 ## Only elevation has an estimation of lambda = 2
 add_boxbox_transform <- function(df) {
@@ -50,7 +50,7 @@ make_and_print_bins <- function(x, breaks = 10) {
     ncol = 2
   )
 }
-make_and_print_bins(raw_train$elevation)
+# make_and_print_bins(raw_train$elevation)
 # make_and_print_bins(raw_train$aspect)
 # make_and_print_bins(raw_train$slope)
 # make_and_print_bins(raw_train$horizontal_distance_to_hydrology)
@@ -164,92 +164,102 @@ transform_soil_to_factor <- function(df) {
 }
 
 # Distances
-add_distances_features <- function(df){
-    message("... Adding distance features")
-    df %>%
-        mutate(st_line_dist_to_hydrology = sqrt(horizontal_distance_to_hydrology^2+vertical_distance_to_hydrology^2),
-               neg_vert_dist = vertical_distance_to_hydrology<0,
-               hdth_gt_1250 = horizontal_distance_to_hydrology>1250,
-               hdth_lt_600 = horizontal_distance_to_hydrology<600,
-               vdth_gt_500 = vertical_distance_to_hydrology>=500,
-               vdth_btw_350_500 = vertical_distance_to_hydrology>350 & vertical_distance_to_hydrology<500,
-               vdth_lt_350 = vertical_distance_to_hydrology <= 350,
-               dist_ratio_sq = (horizontal_distance_to_hydrology/vertical_distance_to_hydrology)^2)
+add_distances_features <- function(df) {
+  message("... Adding distance features")
+  df %>%
+    mutate(
+      st_line_dist_to_hydrology = sqrt(horizontal_distance_to_hydrology^2 + vertical_distance_to_hydrology^2),
+      neg_vert_dist = vertical_distance_to_hydrology < 0,
+      hdth_gt_1250 = horizontal_distance_to_hydrology > 1250,
+      hdth_lt_600 = horizontal_distance_to_hydrology < 600,
+      vdth_gt_500 = vertical_distance_to_hydrology >= 500,
+      vdth_btw_350_500 = vertical_distance_to_hydrology > 350 & vertical_distance_to_hydrology < 500,
+      vdth_lt_350 = vertical_distance_to_hydrology <= 350,
+      dist_ratio_sq = (horizontal_distance_to_hydrology / vertical_distance_to_hydrology)^2
+    )
 }
 
 # PCA
 
 ## 1> PCA for all components except Soil Type & Wilderness Type
-pca_fit <- prcomp(x = raw_train[1:10], center = T, scale. = T)
-pca_fit
-pca_fit %>% summary()
-screeplot(pca_fit, type = "l", npcs = 10)
+# pca_fit <- prcomp(x = raw_train[1:10], center = T, scale. = T)
+# pca_fit
+# pca_fit %>% summary()
+# screeplot(pca_fit, type = "l", npcs = 10)
+# save(pca_fit, file = "cache/pca_fit.Rdata")
 ## Potentially keep ~6 PCs for all variables inserted in the PCA model (except Soil Type)
 ## ~89% of variation explained
 
 add_pca_transform_continuous_vars <- function(df) {
   message("... All vars except Soil or Wild vars replaced by 6 PCA components")
+  load(file = "cache/pca_fit.Rdata")
   pca_df <- as_tibble(predict(pca_fit, df %>% select("elevation", "aspect", "slope", "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology", "horizontal_distance_to_roadways", "hillshade_9am", "hillshade_noon", "hillshade_3pm", "horizontal_distance_to_fire_points"))[, 1:6])
-  names(pca_df) <- paste0('conti_',names(pca_df))
+  names(pca_df) <- paste0("conti_", names(pca_df))
   keep <- !(names(df) %in% c("elevation", "aspect", "slope", "horizontal_distance_to_hydrology", "vertical_distance_to_hydrology", "horizontal_distance_to_roadways", "hillshade_9am", "hillshade_noon", "hillshade_3pm", "horizontal_distance_to_fire_points"))
   pca_df %>% bind_cols(df[keep])
 }
 
 ## 2> PCA for Soil Type & Wild Type
-pca_fit2 <- prcomp(x = raw_train %>% dplyr::select(contains("wild"), contains("soil")), center = T, scale. = T)
-pca_fit2
-pca_fit2 %>% summary()
-screeplot(pca_fit2, type = "l", npcs = 20)
-## Doesn't seem to show any promise of variable reduction here
-## Though there is a sharp knee in the scree plot at k=4
+# pca_fit2 <- prcomp(x = raw_train %>% dplyr::select(contains("wild"), contains("soil")), center = T, scale. = T)
+# pca_fit2
+# pca_fit2 %>% summary()
+# screeplot(pca_fit2, type = "l", npcs = 20)
+# save(pca_fit2, file = "cache/pca_fit2.Rdata")
+# Doesn't seem to show any promise of variable reduction here
+# Though there is a sharp knee in the scree plot at k=4
 
 add_pca_transform_soil_wild <- function(df) {
   message("... Soil & Wild vars replaced by 4 PCA components")
+  load(file = "cache/pca_fit2.Rdata")
+
   pca_df <- as_tibble(predict(pca_fit2, df %>% select(contains("wild"), contains("soil")))[, 1:4])
-  names(pca_df) <- paste0('soil_',names(pca_df))
+  names(pca_df) <- paste0("soil_", names(pca_df))
   keep <- !(names(df) %in% names(df %>% dplyr::select(contains("wild"), contains("soil"))))
   pca_df %>% bind_cols(df[keep])
 }
 
 ## 3> PCA for HillShade Only
-pca_fit3 <- prcomp(x = raw_train %>% dplyr::select(contains("hill")), center = T, scale. = T)
-pca_fit3
-pca_fit3 %>% summary()
-screeplot(pca_fit3, type = "l", npcs = 3)
+# pca_fit3 <- prcomp(x = raw_train %>% dplyr::select(contains("hill")), center = T, scale. = T)
+# pca_fit3
+# pca_fit3 %>% summary()
+# screeplot(pca_fit3, type = "l", npcs = 3)
+# save(pca_fit3, file = "cache/pca_fit3.Rdata")
 
 ## First 2 components explain 99% of the variation
 
 add_pca_transform_hillshade <- function(df) {
-    message("... Hillshade vars replaced by 2 PCA components")
-    pca_df <- as_tibble(predict(pca_fit3, df %>% dplyr::select(contains("hill")))[, 1:2])
-    names(pca_df) <- paste0('hill_',names(pca_df))
-    keep <- !(names(df) %in% names(df %>% dplyr::select(contains("hill"))))
-    pca_df %>% bind_cols(df[keep])
+  message("... Hillshade vars replaced by 2 PCA components")
+  load(file = "cache/pca_fit3.Rdata")
+  pca_df <- as_tibble(predict(pca_fit3, df %>% dplyr::select(contains("hill")))[, 1:2])
+  names(pca_df) <- paste0("hill_", names(pca_df))
+  keep <- !(names(df) %in% names(df %>% dplyr::select(contains("hill"))))
+  pca_df %>% bind_cols(df[keep])
 }
 
 
 # Fully standardized training set
 center_scale_pp <- preProcess(raw_train,
-                              method = c("center","scale"))
-
+  method = c("center", "scale")
+)
 
 
 # Make response var the first variable (useful when modeling)
-
-make_response_var_the_first_var <- function(df){
-    message("... Making resp var the first var")
-    df %>%
-        select(cover_type,
-               names(df))
+make_response_var_the_first_var <- function(df) {
+  message("... Making resp var the first var")
+  df %>%
+    select(
+      cover_type,
+      names(df)
+    )
 }
 
 # Generic function to convert factor vars into dummy vars
-convert_factors_dummies <- function(df){
-    message("... Converting factors to dummy variables")
-    fct_df <- df %>% dplyr::select(-cover_type) %>% dplyr::select_if(is.factor)
-    keep <- !(names(df) %in% names(fct_df))
-    model.matrix(~., fct_df)[,-1] %>%
-        as_tibble() %>%
-        janitor::clean_names() %>%
-        bind_cols(df[keep])
-    }
+convert_factors_dummies <- function(df) {
+  message("... Converting factors to dummy variables")
+  fct_df <- df %>% dplyr::select(-cover_type) %>% dplyr::select_if(is.factor)
+  keep <- !(names(df) %in% names(fct_df))
+  model.matrix(~., fct_df)[, -1] %>%
+    as_tibble() %>%
+    janitor::clean_names() %>%
+    bind_cols(df[keep])
+}
