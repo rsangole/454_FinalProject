@@ -8,11 +8,13 @@ library(gridExtra)
 library(tidyr)
 library(xgboost)
 library(xgboostExplainer)
+library(mlr)
 library(caret)
 
 ggthemr("fresh")
 options(max.print = 1000)
 
+source("libs/utils.R")
 
 load("cache/raw_train.rdata")
 glimpse(raw_train)
@@ -29,20 +31,21 @@ df_xg <- raw_train %>%
 
 glimpse(df_xg)
 
-model_mat <- xgboost::xgb.DMatrix(as.matrix(df_xg), label=df_xg$cover_type)
 
-xgboost(data = model_mat,
-        # label = df_xg$cover_type,
-        verbose = 2,
-        nrounds = 500)
-
-caret::train(as.factor(cover_type)~.,
-      df_xg,
-      method='xgboost')
-
-
-library(randomForest)
-df_
-rfFit <- randomForest(formula = as.factor(cover_type)~.,
-             data = df_xg,
-             importance = T)
+# model_mat <- xgboost::xgb.DMatrix(as.matrix(df_xg), label=df_xg$cover_type)
+#
+# xgboost(data = model_mat,
+#         # label = df_xg$cover_type,
+#         verbose = 2,
+#         nrounds = 500)
+#
+# caret::train(as.factor(cover_type)~.,
+#       df_xg,
+#       method='xgboost')
+#
+#
+# library(randomForest)
+# df_
+# rfFit <- randomForest(formula = as.factor(cover_type)~.,
+#              data = df_xg,
+#              importance = T)
