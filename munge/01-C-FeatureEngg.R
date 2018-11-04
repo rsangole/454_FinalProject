@@ -175,7 +175,8 @@ add_distances_features <- function(df) {
       vdth_gt_500 = vertical_distance_to_hydrology >= 500,
       vdth_btw_350_500 = vertical_distance_to_hydrology > 350 & vertical_distance_to_hydrology < 500,
       vdth_lt_350 = vertical_distance_to_hydrology <= 350,
-      dist_ratio_sq = (horizontal_distance_to_hydrology / vertical_distance_to_hydrology)^2
+      dist_ratio_sq = (horizontal_distance_to_hydrology / vertical_distance_to_hydrology)^2,
+      dist_ratio_sq = ifelse(is.infinite(dist_ratio_sq) | is.na(dist_ratio_sq), 999999, dist_ratio_sq)
     )
 }
 
