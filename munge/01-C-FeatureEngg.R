@@ -263,3 +263,25 @@ convert_factors_dummies <- function(df) {
     janitor::clean_names() %>%
     bind_cols(df[keep])
 }
+
+
+# Make everything numeric, except cover_type
+make_all_responses_numeric_datatype <- function(df){
+    message("... Converting all variables *except* cover_type to numeric datatype")
+    df_response <- df["cover_type"]
+    df %>%
+        dplyr::select(-cover_type) %>%
+        purrr::map_df(~as.numeric(.x)) %>%
+        bind_cols(df_response)
+}
+
+# Make response variable into a one-vs-others flavor
+make_response_var_one_vs_all <- function(df, desired_resp_level){
+    message("... Converting cover_type into one-vs-all. Selected level is: ** ", desired_resp_level, " **")
+    assertive::assert_is_subset(desired_resp_level, levels(df[["cover_type"]]))
+    to_return <- df %>%
+        mutate(cover_type = ifelse(cover_type==desired_resp_level,desired_resp_level,"other"),
+               cover_type = factor(cover_type, levels = c(desired_resp_level,"other")))
+    message("... Done. Counts for ", desired_resp_level, "/other = ", paste0(table(df_m1$cover_type),collapse = "/"))
+    to_return
+}

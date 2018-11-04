@@ -26,8 +26,8 @@ df_xg <- raw_train %>%
     # transform_wilderness_to_factor() %>%
     # transform_soil_to_factor() %>%
     convert_factors_dummies() %>%
-    make_response_var_the_first_var() %>%
-    purrr::map_df(~as.numeric(.x))
+    make_all_responses_numeric_datatype() %>%
+    make_response_var_the_first_var()
 
 glimpse(df_xg)
 
