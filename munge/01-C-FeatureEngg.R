@@ -283,6 +283,6 @@ make_response_var_one_vs_all <- function(df, desired_resp_level){
     to_return <- df %>%
         mutate(cover_type = ifelse(cover_type==desired_resp_level,desired_resp_level,"other"),
                cover_type = factor(cover_type, levels = c(desired_resp_level,"other")))
-    message("... Done. Counts for ", desired_resp_level, "/other = ", paste0(table(df_m1$cover_type),collapse = "/"))
+    message("... Done. Counts for ", desired_resp_level, "/other = ", paste0(table(to_return$cover_type),collapse = "/"))
     to_return
 }
