@@ -7,7 +7,7 @@ library(janitor)
 library(gridExtra)
 library(tidyr)
 library(xgboost)
-# library(xgboostExplainer)
+library(xgboostExplainer)
 library(mlr)
 # library(caret)
 
