@@ -1,0 +1,26 @@
+# Dataset Ideas
+                                                D1  D2  D3
+add_boxbox_transform                            x   x   x
+add_distances_features                          x   x   x
+transform_continuous_to_bins                    x   x
+transform_wilderness_to_factor                  x       x
+transform_soil_to_factor                        x       x
+convert_factors_dummies                         x       x
+make_all_responses_numeric_datatype             x       x
+WOE                                                 x
+
+
+
+Multiclass
+
+* H0: Binning makes things better: D1 vs D3
+
+
+One vs All
+
+
+
+
+One vs One
+
+* H0: WOE makes things better
