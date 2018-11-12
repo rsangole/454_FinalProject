@@ -34,7 +34,7 @@ head(df_D1_m1)
                   measures = meas_binary))
 
 
-lattice::dotplot(mmce.test.mean~max_depth, groups=nrounds,
+lattice::xyplot(mmce.test.mean~as.numeric(max_depth), groups=eta,
                  res$opt.path$env$path,
                  auto.key = TRUE, type = "b")
 
