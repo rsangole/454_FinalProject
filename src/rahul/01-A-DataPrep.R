@@ -37,4 +37,3 @@ df_D2 <- raw_train %>%
     make_all_responses_numeric_datatype() %>%
     make_response_var_the_first_var()
 glimpse(df_D2)
-

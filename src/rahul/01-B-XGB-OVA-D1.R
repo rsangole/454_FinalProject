@@ -1,3 +1,9 @@
+# Common definitions
+parallelMap::parallelStart(mode = "multicore", cpus = 4)
+meas_binary <- list(mmce, f1, kappa, fpr, fnr, auc)
+(rdesc <- makeResampleDesc(method = "CV", iters = 10, stratify = TRUE))
+(ctrl = makeTuneControlGrid())
+
 ################################################
 #                  DATASET D1                  #
 ################################################
@@ -5,34 +11,28 @@
 # Model #1
 # First test for one-vs-all for `spruce_fir` vs all
 
-df_m1 <- df_D1 %>%
+df_D1_m1 <- df_D1 %>%
   make_response_var_one_vs_all("spruce_fir")
-glimpse(df_m1)
+glimpse(df_D1_m1)
 
-df_m1 <- as.data.frame(df_m1)
-head(df_m1)
+df_D1_m1 <- as.data.frame(df_D1_m1)
+head(df_D1_m1)
 
-(tsk <- makeClassifTask(data = df_m1, target = "cover_type"))
-(lrn <- makeLearner(cl = "classif.xgboost", id = "model1_xbg", verbose = 1))
-(rdesc <- makeResampleDesc(method = "CV", iters = 3))
-ps = makeParamSet(
-    makeDiscreteParam("nrounds", values = c(60L)),
-    makeDiscreteParam("max_depth", values = c(15))
-)
-(ctrl = makeTuneControlGrid())
-
-parallelMap::parallelStart(mode = "multicore", cpus = 4)
-
-# (res <- resample(learner = lrn,
-#                  task = tsk,
-#                  resampling = rdesc,
-#                  show.info = T))
-
+(tsk <- makeClassifTask(data = df_D1_m1, target = "cover_type"))
+(lrn <- makeLearner(cl = "classif.xgboost", id = "model1_xbg", predict.type = "prob",
+                    verbose = 1, early_stopping_rounds = 20, nrounds = 50L))
+(ps = makeParamSet(
+    makeDiscreteParam("eta", values = c(0.1,0.3,0.5)),
+    makeDiscreteParam("max_depth", values = c(5,10,15))
+))
 (res = tuneParams(learner = lrn,
-                 task = tsk,
-                 resampling = rdesc,
-                 par.set = ps,
-                 control = ctrl))
+                  task = tsk,
+                  resampling = rdesc,
+                  par.set = ps,
+                  control = ctrl,
+                  show.info = T,
+                  measures = meas_binary))
+
 
 lattice::dotplot(mmce.test.mean~max_depth, groups=nrounds,
                  res$opt.path$env$path,
