@@ -19,33 +19,22 @@ source("munge/01-C-FeatureEngg.R")
 load("cache/raw_train.rdata")
 glimpse(raw_train)
 
-df_xg <- raw_train %>%
+df_D1 <- raw_train %>%
     add_boxbox_transform() %>%
     add_distances_features() %>%
     transform_continuous_to_bins() %>%
-    # transform_wilderness_to_factor() %>%
-    # transform_soil_to_factor() %>%
     convert_factors_dummies() %>%
     make_all_responses_numeric_datatype() %>%
     make_response_var_the_first_var()
+glimpse(df_D1)
 
-glimpse(df_xg)
+df_D2 <- raw_train %>%
+    add_boxbox_transform() %>%
+    add_distances_features() %>%
+    transform_continuous_to_bins(cut_labels = F) %>%
+    # transform_wilderness_to_factor() %>%
+    # transform_soil_to_factor() %>%
+    make_all_responses_numeric_datatype() %>%
+    make_response_var_the_first_var()
+glimpse(df_D2)
 
-
-# model_mat <- xgboost::xgb.DMatrix(as.matrix(df_xg), label=df_xg$cover_type)
-#
-# xgboost(data = model_mat,
-#         # label = df_xg$cover_type,
-#         verbose = 2,
-#         nrounds = 500)
-#
-# caret::train(as.factor(cover_type)~.,
-#       df_xg,
-#       method='xgboost')
-#
-#
-# library(randomForest)
-# df_
-# rfFit <- randomForest(formula = as.factor(cover_type)~.,
-#              data = df_xg,
-#              importance = T)

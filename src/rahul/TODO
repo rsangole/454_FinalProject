@@ -1,11 +1,12 @@
 # Dataset Ideas
-                                                D1  D2  D3
+                                                D1  D3  D2
 add_boxbox_transform                            x   x   x
 add_distances_features                          x   x   x
-transform_continuous_to_bins                    x   x
-transform_wilderness_to_factor                  x       x
-transform_soil_to_factor                        x       x
-convert_factors_dummies                         x       x
+transform_continuous_to_bins + dummify          x   x
+transform_continuous_to_bins + keep_numeric             x
+transform_wilderness_to_factor
+transform_soil_to_factor
+convert_factors_dummies                         x
 make_all_responses_numeric_datatype             x       x
 WOE                                                 x
 

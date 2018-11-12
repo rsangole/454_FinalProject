@@ -61,7 +61,7 @@ make_and_print_bins <- function(x, breaks = 10) {
 # make_and_print_bins(raw_train$hillshade_3pm)
 # make_and_print_bins(raw_train$horizontal_distance_to_fire_points)
 
-transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10) {
+transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10, cut_labels=NULL) {
   message("... Transforming conti vars to binned factor vars, using breaks = ", breaks)
   if (is.null(vars)) {
     vars <- c(
@@ -79,7 +79,7 @@ transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10) {
   }
   split_mask <- names(df) %in% vars
   df[split_mask] %>%
-    purrr::map_df(~cut(.x, breaks = breaks)) %>%
+    purrr::map_df(~cut(.x, breaks = breaks, labels = cut_labels)) %>%
     bind_cols(df[!split_mask])
 }
 
