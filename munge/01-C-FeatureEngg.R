@@ -286,3 +286,22 @@ make_response_var_one_vs_all <- function(df, desired_resp_level){
     message("... Done. Counts for ", desired_resp_level, "/other = ", paste0(table(to_return$cover_type),collapse = "/"))
     to_return
 }
+
+# Makes soil and wilderness area variables into WOE for binary classifiers
+convert_factor_vars_to_WOE <- function(df){
+    iv_df <- df %>%
+        select_if(is.factor) %>%
+        mutate(cover_type = as.numeric(cover_type)-1) %>%
+        Information::create_infotables(data = ., y = "cover_type")
+
+    wild_woe <- iv_df$Tables$wilderness_area
+    soil_woe <- iv_df$Tables$soil_type
+
+    df %>%
+        left_join(wild_woe[c("wilderness_area","WOE")]) %>%
+        select(-wilderness_area) %>%
+        rename(wilderness_WOE = WOE) %>%
+        left_join(soil_woe[c("soil_type","WOE")]) %>%
+        select(-soil_type) %>%
+        rename(soil_type_WOE = WOE)
+}

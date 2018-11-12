@@ -37,3 +37,17 @@ df_D2 <- raw_train %>%
     make_all_responses_numeric_datatype() %>%
     make_response_var_the_first_var()
 glimpse(df_D2)
+
+df_D3 <- raw_train %>%
+    add_boxbox_transform() %>%
+    add_distances_features() %>%
+    transform_continuous_to_bins(cut_labels = F) %>%
+    transform_wilderness_to_factor() %>%
+    transform_soil_to_factor() %>%
+    make_response_var_the_first_var()
+glimpse(df_D3)
+
+# df_D3 %>%
+#     make_response_var_one_vs_all("spruce_fir") %>%
+#     convert_factor_vars_to_WOE() %>%
+#     glimpse()
