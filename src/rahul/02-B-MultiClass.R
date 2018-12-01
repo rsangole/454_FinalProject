@@ -7,7 +7,7 @@ set.seed(42)
 
 # Common definitions
 library("parallelMap")
-parallelStartSocket(63)
+parallelStartSocket(63) #mpstat -P ALL 5
 (tsk <- makeClassifTask(id = "base", data = df_xgbpkg_prep_train, target = "cover_type"))
 (ctrl = makeTuneControlGrid())
 (rdesc <- makeResampleDesc(method = "CV", iters=5, stratify = TRUE))
@@ -64,16 +64,72 @@ save(res, file = "src/rahul/tune_results_0001.RData")
 # 17 0.5        14     150     0.03236950       0.9479515
 # 18   1        14     150     0.03492661       0.9438462
 
-
+load("src/rahul/cache/tune_results_0001.RData")
 tune_results <- res$opt.path$env$path
 tune_results$eta <- as.factor(tune_results$eta)
-tune_results$max_depth <- as.factor(tune_results$max_depth)
+tune_results$max_depth <- factor(tune_results$max_depth, levels = c("3","8","14"))
 tune_results$nrounds <- as.numeric(tune_results$nrounds)
 tune_results %>%
+        gather(key = key, value = value, mmce.test.mean, kappa.test.mean) %>%
         ggplot()+
-        geom_point(aes(x=nrounds,y=mmce.test.mean,color=eta))+
-        facet_wrap(~max_depth)
+        geom_point(aes(y=value,x=nrounds, color = max_depth, shape = eta), size = 2.5)+
+        facet_wrap(~key, nrow = 1, scales = "free_y")
 
+
+# Takeaways -
+res
+
+
+
+
+(tsk2 <- makeClassifTask(id = "tune 2", data = df_xgbpkg_prep_train, target = "cover_type"))
+(ctrl = makeTuneControlGrid())
+(rdesc <- makeResampleDesc(method = "CV", iters=5, stratify = TRUE))
+(meas_multi <- list(mmce, kappa))
+(ps2 = makeParamSet(
+    makeDiscreteParam("eta", values = c(0.5)),
+    makeDiscreteParam("max_depth", values = c(14)),
+    makeDiscreteParam("nrounds", values = c(150)),
+    makeDiscreteParam("min_child_weight", values = c(1, 5, 10)),
+    makeDiscreteParam("subsample", values=c(1, 0.8, 0.6)),
+    makeDiscreteParam("colsample_bytree", values=c(1, 0.8, 0.6))
+    ))
+(lrn <- makeLearner(cl = "classif.xgboost",
+                     id = "gridsearch", verbose = 1))
+# (lrn1 <- makeLearner(cl = "classif.xgboost",
+#                      id = "gridsearch_1",
+#                     eta = 1.0,
+#                     max_depth = 3,
+#                     nrounds = 50))
+# (lrn2 <- makeLearner(cl = "classif.xgboost",
+#                      id = "gridsearch_2",
+#                     eta = 1.0,
+#                     max_depth = 3,
+#                     nrounds = 100))
+
+start_time <- Sys.time()
+#tune_result_0001
+(res2 = tuneParams(learner = lrn,
+                  task = tsk2,
+                  resampling = rdesc,
+                  par.set = ps2,
+                  control = ctrl,
+                  show.info = T,
+                  measures = meas_multi))
+end_time <- Sys.time()
+end_time-start_time # 7 hours
+save(res2, file = "src/rahul/tune_results_0002.RData")
+tune_results <- res2$opt.path$env$path
+tune_results$min_child_weight <- as.factor(tune_results$min_child_weight)
+tune_results$subsample  <- factor(tune_results$subsample)
+tune_results$colsample_bytree <- as.numeric(tune_results$colsample_bytree)
+tune_results %>%
+        gather(key = key, value = value, mmce.test.mean, kappa.test.mean) %>%
+        ggplot()+
+        geom_point(aes(y=value,x=colsample_bytree, color = min_child_weight, shape = eta), size = 2.5)+
+        facet_wrap(~key, nrow = 1, scales = "free_y")
+
+### --- OLD BENCHMARK CODE ----
 # # tsk2 <- makeClassifTask(id = "h1",   data = df_hyp1_train, target = "cover_type")
 # (lrn1 <- makeLearner(cl = "classif.xgboost",
 #                      id = "gridsearch",
@@ -95,9 +151,9 @@ tune_results %>%
 #                                  ppc.pca = TRUE,
 #                                  ppc.thresh = 0.8))
 #
-bmr_h1 = benchmark(learners = list(lrn1, lrn2),
-                   tasks = list(tsk1, tsk2),
-                   resamplings = rdesc, measures = meas_multi, show.info = T)
+# bmr_h1 = benchmark(learners = list(lrn1, lrn2),
+#                    tasks = list(tsk1, tsk2),
+#                    resamplings = rdesc, measures = meas_multi, show.info = T)
 
 # Mapping in parallel: mode = multicore; cpus = 32; elements = 4.
 # > bmr_h1
