@@ -12,6 +12,10 @@ parallelStartSocket(63) #mpstat -P ALL 5
 (ctrl = makeTuneControlGrid())
 (rdesc <- makeResampleDesc(method = "CV", iters=5, stratify = TRUE))
 (meas_multi <- list(mmce, kappa))
+
+
+# Param search 1 - eta, max_depth, nrounds
+
 (ps = makeParamSet(
     makeDiscreteParam("eta", values = c(0.5,1.0)),
     makeDiscreteParam("max_depth", values = c(3,8,14)),
@@ -76,11 +80,7 @@ tune_results %>%
         facet_wrap(~key, nrow = 1, scales = "free_y")
 
 
-# Takeaways -
-res
-
-
-
+# Param search 2 - min child wt, subsample, colsample by tree
 
 (tsk2 <- makeClassifTask(id = "tune 2", data = df_xgbpkg_prep_train, target = "cover_type"))
 (ctrl = makeTuneControlGrid())
@@ -118,8 +118,8 @@ start_time <- Sys.time()
                   measures = meas_multi))
 end_time <- Sys.time()
 end_time-start_time # 7 hours
-save(res2, file = "src/rahul/tune_results_0002.RData")
-load("src/rahul/tune_results_0002.RData")
+save(res2, file = "src/rahul/cache/tune_results_0002.RData")
+load("src/rahul/cache/tune_results_0002.RData")
 tune_results <- res2$opt.path$env$path
 tune_results$min_child_weight <- as.factor(tune_results$min_child_weight)
 tune_results$subsample  <- factor(tune_results$subsample)
