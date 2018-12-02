@@ -435,5 +435,38 @@ load("src/rahul/xgb_trad_004.Rdata")
 xgb.ggplot.importance(importance_matrix = xgb.importance(model = bst4, feature_names = bst4$feature_names), top_n = 15)
 bst4_class <-predict(bst4, newdata = dtrain)
 caret::confusionMatrix(factor(bst4_class), factor(train_data$label))
-bst4_class <- predict(bst3, newdata = dtest)
+bst4_class <- predict(bst4, newdata = dtest)
 caret::confusionMatrix(factor(bst4_class), factor(test_data$label))
+# Confusion Matrix and Statistics
+#
+# Reference
+# Prediction     0     1     2     3     4     5     6
+# 0 61282  1498     0     0    21     3   189
+# 1  2129 83219   136     0   325    93    43
+# 2     2    69 10290    62    17   173     0
+# 3     0     0    55   735     0    20     0
+# 4    21   121    14     0  2468     3     1
+# 5     1    67   231    27    14  4918     0
+# 6   117    16     0     0     2     0  5920
+#
+# Overall Statistics
+#
+# Accuracy : 0.9686
+# 95% CI : (0.9678, 0.9694)
+# No Information Rate : 0.4876
+# P-Value [Acc > NIR] : < 2.2e-16
+#
+# Kappa : 0.9495
+# Mcnemar's Test P-Value : NA
+#
+# Statistics by Class:
+#
+#                      Class: 0 Class: 1 Class: 2 Class: 3 Class: 4 Class: 5 Class: 6
+# Sensitivity            0.9643   0.9792  0.95935 0.891990  0.86688  0.94395  0.96213
+# Specificity            0.9846   0.9695  0.99803 0.999568  0.99907  0.99799  0.99920
+# Pos Pred Value         0.9728   0.9683  0.96957 0.907407  0.93912  0.93534  0.97770
+# Neg Pred Value         0.9796   0.9800  0.99734 0.999487  0.99779  0.99827  0.99862
+# Prevalence             0.3646   0.4876  0.06154 0.004727  0.01633  0.02989  0.03530
+# Detection Rate         0.3516   0.4774  0.05904 0.004217  0.01416  0.02822  0.03396
+# Detection Prevalence   0.3614   0.4931  0.06089 0.004647  0.01508  0.03017  0.03474
+# Balanced Accuracy      0.9744   0.9743  0.97869 0.945779  0.93297  0.97097  0.98066
