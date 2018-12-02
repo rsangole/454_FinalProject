@@ -61,7 +61,7 @@ make_and_print_bins <- function(x, breaks = 10) {
 # make_and_print_bins(raw_train$hillshade_3pm)
 # make_and_print_bins(raw_train$horizontal_distance_to_fire_points)
 
-transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10) {
+transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10, cut_labels=NULL) {
   message("... Transforming conti vars to binned factor vars, using breaks = ", breaks)
   if (is.null(vars)) {
     vars <- c(
@@ -79,7 +79,7 @@ transform_continuous_to_bins <- function(df, vars = NULL, breaks = 10) {
   }
   split_mask <- names(df) %in% vars
   df[split_mask] %>%
-    purrr::map_df(~cut(.x, breaks = breaks)) %>%
+    purrr::map_df(~cut(.x, breaks = breaks, labels = cut_labels)) %>%
     bind_cols(df[!split_mask])
 }
 
@@ -285,4 +285,23 @@ make_response_var_one_vs_all <- function(df, desired_resp_level){
                cover_type = factor(cover_type, levels = c(desired_resp_level,"other")))
     message("... Done. Counts for ", desired_resp_level, "/other = ", paste0(table(to_return$cover_type),collapse = "/"))
     to_return
+}
+
+# Makes soil and wilderness area variables into WOE for binary classifiers
+convert_factor_vars_to_WOE <- function(df){
+    iv_df <- df %>%
+        select_if(is.factor) %>%
+        mutate(cover_type = as.numeric(cover_type)-1) %>%
+        Information::create_infotables(data = ., y = "cover_type")
+
+    wild_woe <- iv_df$Tables$wilderness_area
+    soil_woe <- iv_df$Tables$soil_type
+
+    df %>%
+        left_join(wild_woe[c("wilderness_area","WOE")]) %>%
+        select(-wilderness_area) %>%
+        rename(wilderness_WOE = WOE) %>%
+        left_join(soil_woe[c("soil_type","WOE")]) %>%
+        select(-soil_type) %>%
+        rename(soil_type_WOE = WOE)
 }

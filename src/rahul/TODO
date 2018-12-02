@@ -1,0 +1,38 @@
+# Dataset Ideas
+                                                | 1 | 2 | 3 | 4 | 5 |
+add_boxbox_transform                            | x | x | x | x | x |
+add_distances_features                          | x | x | x | x | x |
+transform_continuous_to_bins + dummify          | x |   |   |   |   |
+transform_continuous_to_bins + keep_numeric     |   | x | x | x | x |
+transform_wilderness_to_factor                  |   |   | x | x | x |
+transform_soil_to_factor                        |   |   | x | x | x |
+convert_factors_dummies                         | x |   |   |   |   |
+WOE                                             |   |   | x |   |   |
+Scale                                           |   |   |   |   |   |
+Mean encodings                                  |   |   |   | x |   |
+make_all_responses_numeric_datatype             | x | x | x | x | x |
+
+D1 = binning, dummies, soil & wild dummies
+D2 = binning but no dummies, soil & wild dummies
+D3 = binning, soil& wild made into 1 col, WOE
+D4 = binning, mean encoding
+D5 = binning
+
+
+
+Multiclass
+1* H0: Binning makes things better, without dummy creation
+2* H0: PCA makes things better
+
+
+
+One vs All
+* H0: Binning makes things better: D1 vs D3
+* H0: Scaling makes things better: D3 vs D4
+* H0: Adding PCA makes things better: D3/D4 vs (D3/D4)+preProcWrapper
+
+
+
+
+One vs One
+* H0: WOE makes things better
