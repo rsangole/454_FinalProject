@@ -1,8 +1,5 @@
 # Common definitions
 parallelMap::parallelStart(mode = "multicore")
-meas_binary <- list(mmce, f1, kappa, fpr, fnr, auc)
-(rdesc <- makeResampleDesc(method = "CV", iters = 5, stratify = TRUE))
-(ctrl = makeTuneControlGrid())
 
 source("munge/01-C-FeatureEngg.R")
 
@@ -31,6 +28,7 @@ df_xgbpkg_prep_train <- df_xgbpkg_prep_train %>%
         mutate(wilderness_area=as.numeric(wilderness_area),
                soil_type = as.numeric(soil_type),
                log_sw = log(soil_type*wilderness_area))
+
 df_xgbpkg_prep_test <- df_xgbpkg_prep_test %>%
         # bind_cols(train_cols_to_append) %>%
         transform_wilderness_to_factor() %>%
@@ -40,44 +38,83 @@ df_xgbpkg_prep_test <- df_xgbpkg_prep_test %>%
                log_sw = log(soil_type*wilderness_area))
 
 
+(lrn <- makeLearner(cl = "classif.xgboost", id = "xbg", predict.type = "prob",
+                    verbose = 1, early_stopping_rounds = 3, nrounds = 300L))
+(meas_binary <- list(mmce, f1, kappa, fpr, fnr, auc))
 
 
-#
-#
-# (tsk <- makeClassifTask(data = df_xgbpkg_prep_train, target = "cover_type"))
-# (lrn <- makeLearner(cl = "classif.xgboost", id = "model1_xbg", predict.type = "prob",
-#                     verbose = 1, early_stopping_rounds = 20, nrounds = 50L))
-# (ps = makeParamSet(
-#         makeDiscreteParam("eta", values = c(0.1,0.3,0.5)),
-#         makeDiscreteParam("max_depth", values = c(10,15,20))
-# ))
-# (res = tuneParams(learner = lrn,
-#                   task = tsk,
-#                   resampling = rdesc,
-#                   par.set = ps,
-#                   control = ctrl,
-#                   show.info = T,
-#                   measures = meas_binary))
-#
-#
-# lattice::dotplot(mmce.test.mean~max_depth, groups=nrounds,
-#                  res$opt.path$env$path,
-#                  auto.key = TRUE, type = "b")
-#
-# message("Best tune result is: ")
-# res
-#
-# # Predict with the best tune
-# (lrn <- setHyperPars(lrn, par.vals = res$x))
-# (mod <- train(lrn, tsk))
-# pred = predict(mod, task = tsk)
-# # head(getPredictionProbabilities(pred))
-#
-# calculateConfusionMatrix(pred, relative = T)
-# performance(pred)
-#
-# getLearnerModel(mod) %>%
-#         xgb.importance(model = .) %>%
-#         xgb.ggplot.importance(top_n = 10, rel_to_first = T)+
-#         labs(title = 'Feature Importance - spruce_fir')
-#
+df_spruce <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("spruce_fir")
+df_spruce_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("spruce_fir")
+(tsk_spruce <- makeClassifTask(data = df_spruce, target = "cover_type"))
+fit_spruce <- train(lrn, tsk_spruce)
+
+df_lodgepole_pine <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("lodgepole_pine")
+df_lodgepole_pine_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("lodgepole_pine")
+(tsk_lodgepole_pine <- makeClassifTask(data = df_lodgepole_pine, target = "cover_type"))
+fit_lodgepole_pine <- train(lrn, tsk_lodgepole_pine)
+
+df_ponderosa_pine <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("ponderosa_pine")
+df_ponderosa_pine_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("ponderosa_pine")
+(tsk_ponderosa_pine <- makeClassifTask(data = df_ponderosa_pine, target = "cover_type"))
+fit_ponderosa_pine <- train(lrn, tsk_ponderosa_pine)
+
+df_cottonwood_Willow <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("cottonwood_Willow")
+df_cottonwood_Willow_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("cottonwood_Willow")
+(tsk_cottonwood_Willow <- makeClassifTask(data = df_cottonwood_Willow, target = "cover_type"))
+fit_cottonwood_Willow <- train(lrn, tsk_cottonwood_Willow)
+
+df_aspen <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("aspen")
+df_aspen_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("aspen")
+(tsk_aspen <- makeClassifTask(data = df_aspen, target = "cover_type"))
+fit_aspen <- train(lrn, tsk_aspen)
+
+df_douglasfir <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("douglasfir")
+df_douglasfir_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("douglasfir")
+(tsk_douglasfir <- makeClassifTask(data = df_douglasfir, target = "cover_type"))
+fit_douglasfir <- train(lrn, tsk_douglasfir)
+
+df_krummholz <- df_xgbpkg_prep_train %>% make_response_var_one_vs_all("krummholz")
+df_krummholz_test <- df_xgbpkg_prep_test %>% make_response_var_one_vs_all("krummholz")
+(tsk_krummholz <- makeClassifTask(data = df_krummholz, target = "cover_type"))
+fit_krummholz <- train(lrn, tsk_krummholz)
+
+
+pred__spruce_test<- predict(fit_spruce, newdata = df_spruce_test)
+pred__lodgepole_pine_test<- predict(fit_lodgepole_pine, newdata = df_lodgepole_pine_test)
+pred__ponderosa_pine_test<- predict(fit_ponderosa_pine, newdata = df_ponderosa_pine_test)
+pred__cottonwood_Willow_test<- predict(fit_cottonwood_Willow, newdata = df_cottonwood_Willow_test)
+pred__aspen_test<- predict(fit_aspen, newdata = df_aspen_test)
+pred__douglasfir_test<- predict(fit_douglasfir, newdata = df_douglasfir_test)
+pred__krummholz_test<- predict(fit_krummholz, newdata = df_krummholz_test)
+
+results <- tibble(
+        class = c(
+                "spruce",
+                "lodgepole_pine",
+                "ponderosa_pine",
+                "cottonwood_Willow",
+                "aspen",
+                "douglasfir",
+                "krummholz"
+        ),
+        predictions = list(pred__spruce_test,
+                        pred__lodgepole_pine_test,
+                        pred__ponderosa_pine_test,
+                        pred__cottonwood_Willow_test,
+                        pred__aspen_test,
+                        pred__douglasfir_test,
+                        pred__krummholz_test)
+) %>%
+        mutate(
+                perf = map(predictions, ~performance(.x, meas_binary)),
+                mmce = map_dbl(perf, ~.x[["mmce"]]),
+                auc = map_dbl(perf, ~.x[["auc"]]),
+                kappa = map_dbl(perf, ~.x[["kappa"]])
+        ) %>%
+        arrange(auc,kappa,mmce)
+results %>%
+        ggplot(aes(y=auc,x=class))+
+        geom_point()+
+        coord_flip()
+
+save(results, file = "src/rahul/cache/02_c_results.RData")
