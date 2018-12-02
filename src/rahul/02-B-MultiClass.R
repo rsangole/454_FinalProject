@@ -119,6 +119,7 @@ start_time <- Sys.time()
 end_time <- Sys.time()
 end_time-start_time # 7 hours
 save(res2, file = "src/rahul/tune_results_0002.RData")
+load("src/rahul/tune_results_0002.RData")
 tune_results <- res2$opt.path$env$path
 tune_results$min_child_weight <- as.factor(tune_results$min_child_weight)
 tune_results$subsample  <- factor(tune_results$subsample)
